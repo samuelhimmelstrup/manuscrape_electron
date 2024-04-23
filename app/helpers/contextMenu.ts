@@ -137,7 +137,7 @@ export function generateMenuItems(
 
       // create screen submenu item
       const screenMenuItem = new MenuItem({
-        label: display.label,
+        label: display.label || `Screen #${display.id}`,
         id: display.id.toString(),
         type: 'radio',
         checked: display.id == activeDisplay.id,

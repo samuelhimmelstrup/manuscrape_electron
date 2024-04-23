@@ -234,7 +234,8 @@ export class ManuScrapeController {
             hideArea: true,
           });
 
-          const { apiHost, loginToken } = this.checkPropertiesIsNotNull();
+          const apiHost = this.requireApiHost();
+          const loginToken = this.requireLoginToken();
 
           await uploadVideoToObservation(
             apiHost,
@@ -295,8 +296,9 @@ export class ManuScrapeController {
 
     // define callback function
     const scrollshotHandler = async (event: IpcMainEvent, area: any) => {
-      const { activeProjectId, apiHost, loginToken } =
-        this.checkPropertiesIsNotNull();
+      const apiHost = this.requireApiHost();
+      const loginToken = this.requireLoginToken();
+      const activeProjectId = this.requireActiveProjectId();
 
       // define here so we can delete it after upload in the finally block
       let filePath: undefined | string;
@@ -425,8 +427,9 @@ export class ManuScrapeController {
     hideArea = false
   ): void {
     const handler = async (event: IpcMainEvent, area: any) => {
-      const { apiHost, activeProjectId, loginToken } =
-        this.checkPropertiesIsNotNull();
+      const apiHost = this.requireApiHost();
+      const loginToken = this.requireLoginToken();
+      const activeProjectId = this.requireActiveProjectId();
 
       if (!this.overlayWindow || this.overlayWindow?.isDestroyed?.())
         throw new Error('Overlay window does not exist');
@@ -487,8 +490,9 @@ export class ManuScrapeController {
   }
 
   public async openEmptyDraftWindow() {
-    const { activeProjectId, apiHost, loginToken } =
-      this.checkPropertiesIsNotNull();
+    const apiHost = this.requireApiHost();
+    const loginToken = this.requireLoginToken();
+    const activeProjectId = this.requireActiveProjectId();
 
     // return early if user mistakenly opens one more window
     const confirmed = await this.confirmCloseNuxtWindowIfAny();
@@ -508,7 +512,8 @@ export class ManuScrapeController {
     observationId: number,
     automaticImageUpload: boolean
   ) {
-    const { activeProjectId, apiHost } = this.checkPropertiesIsNotNull();
+    const apiHost = this.requireApiHost();
+    const activeProjectId = this.requireActiveProjectId();
 
     ipcMain.on(
       'begin-video-capture',
@@ -700,6 +705,12 @@ export class ManuScrapeController {
 
   // reset auth session and update UI accordingly
   private async resetAuth() {
+    // ask for confirmation for closing open window if any
+    const confirmed = await this.confirmCloseNuxtWindowIfAny();
+    if (!confirmed) {
+      return;
+    }
+
     // call logout api
     if (this.apiHost && this.loginToken) {
       await logout(this.apiHost, this.loginToken);
@@ -908,7 +919,7 @@ export class ManuScrapeController {
   }
 
   public openSettingsWindow() {
-    const { apiHost } = this.checkPropertiesIsNotNull();
+    const apiHost = this.requireApiHost();
 
     // navigate automatically if window is open
     if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
@@ -927,7 +938,7 @@ export class ManuScrapeController {
   // opens webapp (hopefully authorized always!)
   // TODO: refactor
   public async openCreateProjectWindow(): Promise<void> {
-    const { apiHost } = this.checkPropertiesIsNotNull();
+    const apiHost = this.requireApiHost();
 
     const confirmed = await this.confirmCloseNuxtWindowIfAny();
     if (!confirmed) {
@@ -946,7 +957,8 @@ export class ManuScrapeController {
           icon: successIcon,
         }).show();
 
-        const { apiHost, loginToken } = this.checkPropertiesIsNotNull();
+        const apiHost = this.requireApiHost();
+        const loginToken = this.requireLoginToken();
         await this.refreshUser(apiHost, loginToken);
 
         this.refreshContextMenu();
@@ -964,7 +976,8 @@ export class ManuScrapeController {
 
   // opens observation drafts window
   public async openObservationDraftsWindow(): Promise<void> {
-    const { apiHost, activeProjectId } = this.checkPropertiesIsNotNull();
+    const apiHost = this.requireApiHost();
+    const activeProjectId = this.requireActiveProjectId();
 
     // support video capture (if navigating from draft list into draft details)
     ipcMain.on(
@@ -1003,14 +1016,14 @@ export class ManuScrapeController {
   }
 
   private async syncAuthStateAndMenu() {
-    const { apiHost, loginToken } = this.checkPropertiesIsNotNull();
+    const apiHost = this.requireApiHost();
     const invalidationCookie = await getInvalidationCookie(apiHost);
 
     if (invalidationCookie) {
       console.info('caught signed out in browser window');
       await this.resetAuth();
-    } else if (this.isLoggedIn() && loginToken) {
-      await this.refreshUser(apiHost, loginToken);
+    } else if (this.isLoggedIn() && this.loginToken) {
+      await this.refreshUser(apiHost, this.loginToken);
       this.refreshContextMenu();
       this.refreshShortcuts();
     }
@@ -1058,24 +1071,28 @@ export class ManuScrapeController {
     });
   }
 
-  private checkPropertiesIsNotNull = () => {
+  private requireActiveProjectId: () => number = () => {
     if (!this.activeProjectId) {
       console.error('No active project id');
       throw new Error('activeProjectId is not set');
+    } else {
+      return this.activeProjectId;
     }
+  };
+  private requireApiHost: () => string = () => {
     if (!this.apiHost) {
       console.error('No api host');
       throw new Error('apiHost is not set');
+    } else {
+      return this.apiHost;
     }
+  };
+  private requireLoginToken: () => string = () => {
     if (!this.loginToken) {
       console.error('No login token');
       throw new Error('loginToken not attached to controller instance');
+    } else {
+      return this.loginToken;
     }
-
-    return {
-      activeProjectId: this.activeProjectId,
-      apiHost: this.apiHost,
-      loginToken: this.loginToken,
-    };
   };
 }
