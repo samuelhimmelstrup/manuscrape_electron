@@ -73,7 +73,7 @@ Clone repositories, look for TODO-comments, make improvement, create feature bra
 
 #### Repository overview:
 
-This repo is an Electron app tested on Windows 11 and a couple Linux distributions. The app provides some client-side native tools, that talks with the api of the online backend app. [Here is the backend repo](https://github.com/nikobojs/manuscrape_nuxt). These two repositories follows compatability with git tags (eg. `v0.9.2` client works with `v0.9.2` api).
+This repo is an Electron app tested on Windows 11 and a couple Linux distributions. The app provides some client-side native tools, that talks with the api of the online backend app. [Here is the backend repo](https://github.com/nikobojs/manuscrape_nuxt).
 <br />
 
 #### Git conventions:
